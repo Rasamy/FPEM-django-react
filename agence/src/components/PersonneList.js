@@ -15,16 +15,23 @@ import { Tag } from 'primereact/tag';
 import { Layout } from './Layout';
 import axios from 'axios';
 import { API_URL } from '../constants/constants';
+import { Dropdown } from 'primereact/dropdown';
 
 export const PersonneList = () => {
     let emptyPersonne = {
         id: null,
+        image: null,
         firstname: '',
         lastname: '',
-        image: null,
         age: 0,
         address: "",
-        feu:0
+        contact: '',
+        is_maried: '',
+        is_baptised:'',
+        situation_familiale:'',
+        feu:1,
+        sexe:0,
+
     };
 
     const cols = [
@@ -47,6 +54,13 @@ export const PersonneList = () => {
     const toast = useRef(null);
     const dt = useRef(null);
 
+
+    const [eglise, setEglise] = useState(null);
+    const [selectedEglise, setSelectedEglise] = useState(null);
+    const [filterValue, setFilterValue] = useState('');
+    const filterInputRef = useRef();
+
+
     useEffect(() => {
         if(localStorage.getItem('access_token') === null){                   
             window.location.href = '/login'
@@ -55,18 +69,74 @@ export const PersonneList = () => {
          (async () => {
            try {
             const token = localStorage.getItem('access_token')
-             const {data} = await axios.get(   
+            const {data} = await axios.get(   
                             API_URL + 'personne/', {
                             headers: {
                                 Authorization: `Bearer ${token}`
                                 }}
                            );
+            const eglises = await axios.get(   
+                            API_URL + 'eglise/', {
+                            headers: {
+                                Authorization: `Bearer ${token}`
+                                }}
+                            );
+            setEglise(eglises.data);
+
              setPersonnes(data);
           } catch (e) {
             console.log('not auth'+ e)
           }
          })()};
     }, []);
+
+    const selectedEgliseTemplate = (option, props) => {
+        if (option) {
+            return (
+                <div className="flex align-items-center">
+                    <div>{option.name}</div>
+                </div>
+            );
+        }
+
+        return <span>{props.placeholder}</span>;
+    };
+
+    const egliseOptionTemplate = (option) => {
+        return (
+            <div className="flex align-items-center">
+                <div>{option.name}</div>
+            </div>
+        );
+    }
+
+    const filterTemplate = (options) => {
+        let {filterOptions} = options;
+    
+        return (
+            <div className="flex gap-2">
+                <InputText value={filterValue} ref={filterInputRef} onChange={(e) => myFilterFunction(e, filterOptions)} />
+                <Button label="Reset" onClick={() => myResetFunction(filterOptions)} />
+            </div>
+        )
+    }
+    
+    const myResetFunction = (options) => {
+        setFilterValue('');
+        options.reset();
+        filterInputRef && filterInputRef.current.focus()
+    }
+
+    const myFilterFunction = (event, options) => {
+        let _filterValue = event.target.value;
+        setFilterValue(_filterValue);
+        options.filter(event);
+    }
+
+    const setEgliseId = (e) => {
+        setSelectedEglise(e.target.value);
+        
+    }
 
     const formatCurrency = (value) => {
         return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
@@ -98,6 +168,9 @@ export const PersonneList = () => {
             let _personnes = [...personnes];
             let _personne = { ...personne };
 
+            if(selectedEglise !== null){
+                personne.eglise = selectedEglise.id
+            }
             if (personne.id) {
                 const index = findIndexById(personne.id);
 
@@ -267,13 +340,6 @@ export const PersonneList = () => {
         return formatCurrency(rowData.age);
     };
 
-    const ratingBodyTemplate = (rowData) => {
-        return <Rating value={rowData.rating} readOnly cancel={false} />;
-    };
-
-    const statusBodyTemplate = (rowData) => {
-        return <Tag value={rowData.inventoryStatus} severity={getSeverity(rowData)}></Tag>;
-    };
 
     const actionBodyTemplate = (rowData) => {
         return (
@@ -283,22 +349,9 @@ export const PersonneList = () => {
             </React.Fragment>
         );
     };
-
-    const getSeverity = (product) => {
-        switch (product.inventoryStatus) {
-            case 'INSTOCK':
-                return 'success';
-
-            case 'LOWSTOCK':
-                return 'warning';
-
-            case 'OUTOFSTOCK':
-                return 'danger';
-
-            default:
-                return null;
-        }
-    };
+    const statusBodyTemplate = (rowData) => {
+        return <span className={`product-badge status-${rowData.feu}`}>{rowData.feu == 1 ? "vivant(e)" : "mort(e)"}</span>;
+    }
 
     const header = (
         <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
@@ -340,14 +393,17 @@ export const PersonneList = () => {
                             paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                             currentPageReportTemplate="Showing {first} to {last} of {totalRecords} products" globalFilter={globalFilter} header={header}>
                         <Column selectionMode="multiple" exportable={false}></Column>
-                        <Column field="id" header="Code" sortable style={{ minWidth: '12rem' }}></Column>
+                        <Column field="image" header="Image" body={imageBodyTemplate}></Column>
                         <Column field="firstname" header="Nom" sortable style={{ minWidth: '16rem' }}></Column>
                         <Column field="lastname" header="Prénom" sortable style={{ minWidth: '16rem' }}></Column>
-                        <Column field="image" header="Image" body={imageBodyTemplate}></Column>
                         <Column field="age" header="age" body={ageBodyTemplate} sortable style={{ minWidth: '8rem' }}></Column>
-                        <Column field="age" header="Age" sortable style={{ minWidth: '10rem' }}></Column>
-                        <Column field="address" header="Adresse" body={ratingBodyTemplate} sortable style={{ minWidth: '12rem' }}></Column>
-                        <Column field="feu" header="Vivant" body={statusBodyTemplate} sortable style={{ minWidth: '12rem' }}></Column>
+                        <Column field="address" header="Adresse" sortable style={{ minWidth: '10rem' }}></Column>
+                        <Column field="contact" header="Contact" sortable style={{ minWidth: '12rem' }}></Column>
+                        <Column field="is_maried" header="Marié" sortable style={{ minWidth: '10rem' }}></Column>
+                        <Column field="is_baptised" header="Baptisé" sortable style={{ minWidth: '12rem' }}></Column>
+                        <Column field="situation_familiale" header="Situation familiale" sortable style={{ minWidth: '10rem' }}></Column>
+                        <Column field="contact" header="Contact" sortable style={{ minWidth: '12rem' }}></Column>
+                        <Column field="feu" header="Vivant" body={statusBodyTemplate}  sortable style={{ minWidth: '12rem' }}></Column>
                         <Column body={actionBodyTemplate} exportable={false} style={{ minWidth: '12rem' }}></Column>
                     </DataTable>
                 </div>
@@ -355,6 +411,14 @@ export const PersonneList = () => {
                 <Dialog visible={personneDialog} style={{ width: '32vw' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Product Details" modal className="p-fluid" footer={personneDialogFooter} onHide={hideDialog}>
                     {personne.image && <img src={`https://primefaces.org/cdn/primereact/images/product/${personne.image}`} alt={personne.image} className="product-image block m-auto pb-3" />}
                     
+                    <div className="card flex justify-content-center">
+                        <label htmlFor="name" className="font-bold">
+                            Nom de l'église
+                        </label>
+                        <Dropdown value={selectedEglise} onChange={setEgliseId} options={eglise} optionLabel="name" placeholder="Choisissez un nom de famille" 
+                ilter valueTemplate={selectedEgliseTemplate} itemTemplate={egliseOptionTemplate} className="w-full md:w-14rem" filter filterTemplate={filterTemplate} />
+                    </div>
+
                     <div className='grid'>
                         <div className="col">
                             <label htmlFor="name" className="font-bold">

@@ -13,6 +13,7 @@ import {Logout} from './components/Logout';
 import { About } from './pages/About';
 import {PersonneList} from './components/PersonneList'
 import { Famille } from './components/Famille';
+import { Bapteme } from './pages/bapteme';
 function App() {
 
     return(
@@ -24,9 +25,7 @@ function App() {
           <Route path="/about" element={<About/>}/>
           <Route path="/personne" element={<PersonneList/>}/>
           <Route path="/famille" element={<Famille/>}/>
-
-
-
+          <Route path="/baptheme" element={<Bapteme/>}/>
         </Routes>
       </Router>
     )

@@ -53,6 +53,11 @@ export function Navigation() {
             icon: "more"
         },
         {
+            path:"/baptheme",
+            name: "Baptheme",
+            icon: "profile"
+        },
+        {
             path:"/famille",
             name: "Famille",
             icon: "profile"
@@ -92,7 +97,7 @@ export function Navigation() {
             <ul className="main">
 
                 {
-                    isAuth ? 
+                    isAuth && 
                     navAuth.map((item) => (
                         <li>
                             <NavLink exact to={item.path.toString()}>
@@ -100,8 +105,6 @@ export function Navigation() {
                             </NavLink>
                         </li>
                     ))
-                    :
-                    console.log(isAuth)
 
                 }
                

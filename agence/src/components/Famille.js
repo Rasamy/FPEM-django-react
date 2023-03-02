@@ -20,7 +20,7 @@ export const Famille = () => {
         lastname: '',
         contact: "",
         address: "",
-        eglise_id: ""
+        eglise: 1
     };
 
     const cols = [
@@ -79,7 +79,6 @@ export const Famille = () => {
 
     }, []);
 
-
     const selectedEgliseTemplate = (option, props) => {
         if (option) {
             return (
@@ -123,6 +122,10 @@ export const Famille = () => {
         options.filter(event);
     }
     
+    const setEgliseId = (e) => {
+        setSelectedEglise(e.target.value);
+        
+    }
 
     const openNew = () => {
         setFamille(emptyFamille);
@@ -146,29 +149,41 @@ export const Famille = () => {
     const savefamille =  () => {
         setSubmitted(true);
 
+        const token = localStorage.getItem("access_token");
+
         if (famille.firstname.trim()) {
             let _familles = [...familles];
             let _famille = { ...famille };
 
+            if(selectedEglise !== null){
+                famille.eglise = selectedEglise.id
+            }
             if (famille.id) {
                 const index = findIndexById(famille.id);
 
                 _familles[index] = famille;
-                toast.current.show({ severity: 'success', summary: 'Successful', detail: 'famille Updated', life: 3000 });
+                axios.put(API_URL+"famille/"+famille.id +"/",famille, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }}).then(res => {
+                        toast.current.show({ severity: 'success', summary: 'Successful', detail: 'famille Updated', life: 3000 });
+                    }).catch( e => {
+                    toast.current.show({ severity: 'error', summary: 'Error', detail: 'erreur d\'enregistrement ' + e.config, life: 3000 });
+                });
+
             } else {
-                _famille.id = createId();
                 _famille.image = 'famille-placeholder.svg';
                 _familles.push(_famille);
 
-                const token = localStorage.getItem("access_token");
-                console.log(famille);
                 axios.post(API_URL+"famille/",famille, {
                     headers: {
                         Authorization: `Bearer ${token}`
                     }}).then(res => {
-                    toast.current.show({ severity: 'success', summary: 'Successful', detail: 'famille Created', life: 3000 });
+                        console.log(res.data.id)
+                        _famille.id = res.data.id;
+                        toast.current.show({ severity: 'success', summary: 'Successful', detail: 'famille Created', life: 3000 });
                 }).catch( e => {
-                    toast.current.show({ severity: 'error', summary: 'Error', detail: 'erreur d\'enregistrement ' + e, life: 3000 });
+                    toast.current.show({ severity: 'error', summary: 'Error', detail: 'erreur d\'enregistrement ' + e.config, life: 3000 });
                 });
                
             }
@@ -177,6 +192,7 @@ export const Famille = () => {
             setFamilles(_familles);
             setFamilleDialog(false);
             setFamille(emptyFamille);
+            setSelectedEglise(null);
         }
     };
 
@@ -192,11 +208,20 @@ export const Famille = () => {
 
     const deletefamille = () => {
         let _familles = familles.filter((val) => val.id !== famille.id);
+        const token = localStorage.getItem("access_token");
 
         setFamilles(_familles);
         setDeletefamilleDialog(false);
         setFamille(emptyFamille);
-        toast.current.show({ severity: 'success', summary: 'Successful', detail: 'famille Deleted', life: 3000 });
+        axios.delete(API_URL+"famille/"+famille.id +"/", {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }}).then(res => {
+                toast.current.show({ severity: 'success', summary: 'Successful', detail: 'famille deleted', life: 3000 });
+            }).catch( e => {
+            toast.current.show({ severity: 'error', summary: 'Error', detail: 'erreur d\'enregistrement ' + e.config, life: 3000 });
+        });
+
     };
 
     const findIndexById = (id) => {
@@ -390,11 +415,9 @@ export const Famille = () => {
                             paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                             currentPageReportTemplate="Showing {first} to {last} of {totalRecords} products" globalFilter={globalFilter} header={header}>
                         <Column selectionMode="multiple" exportable={false}></Column>
-                        <Column field="id" header="Code" sortable style={{ minWidth: '12rem' }}></Column>
+                        <Column field="image" header="Image" body={imageBodyTemplate}></Column>
                         <Column field="firstname" header="Nom" sortable style={{ minWidth: '16rem' }}></Column>
                         <Column field="lastname" header="Prénom" sortable style={{ minWidth: '16rem' }}></Column>
-                        <Column field="age" header="Age" sortable style={{ minWidth: '16rem' }}></Column>
-                        <Column field="image" header="Image" body={imageBodyTemplate}></Column>
                         <Column field="address" header="Adresse" sortable style={{ minWidth: '12rem' }}></Column>
                         <Column body={actionBodyTemplate} exportable={false} style={{ minWidth: '12rem' }}></Column>
                     </DataTable>
@@ -406,7 +429,7 @@ export const Famille = () => {
                         <label htmlFor="name" className="font-bold">
                             Nom de l'église
                         </label>
-                        <Dropdown value={selectedEglise} onChange={(e) => setSelectedEglise(e.value)} options={eglise} optionLabel="name" placeholder="Choisissez un nom de famille" 
+                        <Dropdown value={selectedEglise} onChange={setEgliseId} options={eglise} optionLabel="name" placeholder="Choisissez un nom de famille" 
                 ilter valueTemplate={selectedEgliseTemplate} itemTemplate={egliseOptionTemplate} className="w-full md:w-14rem" filter filterTemplate={filterTemplate} />
                     </div>
 

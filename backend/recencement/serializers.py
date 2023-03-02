@@ -31,9 +31,10 @@ class FamilleSerializer(serializers.ModelSerializer):
 
 
 class PersonneSerializer(serializers.ModelSerializer):
+    image_url = serializers.ImageField(required=False)
     class Meta:
         model = Personne
-        fields = ('id','firstname','lastname','age','address','contact','is_maried','is_baptised','situation_familiale','feu','sexe','famille','author','eglise','baptheme','created_on')
+        fields = ('id','firstname','lastname','age','address','contact','is_maried','is_baptised','situation_familiale','feu','sexe','famille','author','eglise','baptheme','created_on','image_url')
 
 
 class RegisterSerializer(serializers.ModelSerializer):

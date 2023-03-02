@@ -39,6 +39,9 @@ SITUATIONFAMILIALE = (
     (4, "MPANAMPY")
 )
 
+# lets us explicitly set upload path and filename
+def upload_to(instance, filename):
+    return 'images/{filename}'.format(filename=filename)
 
 class Eglise(models.Model):
     name = models.CharField(max_length=200, unique=True)
@@ -100,6 +103,7 @@ class Personne(models.Model):
     eglise = models.ForeignKey('Eglise', on_delete=models.CASCADE)
     baptheme = models.ForeignKey('Baptheme', on_delete=models.CASCADE,default=0)
     created_on = models.DateTimeField(default=now)
+    image_url = models.ImageField(upload_to=upload_to, blank=True, null=True)
 
     class Meta:
         ordering = ['id']

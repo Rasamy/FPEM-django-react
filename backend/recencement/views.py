@@ -9,6 +9,8 @@ from .models import Eglise, Baptheme, Famille, Personne
 from django.contrib.auth.models import User
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework.parsers import MultiPartParser, FormParser
+
 
 
 class UserConnectedView(APIView):
@@ -73,6 +75,8 @@ class FamilleView(viewsets.ModelViewSet):
 class PersonneView(viewsets.ModelViewSet):
     serializer_class = PersonneSerializer
     queryset = Personne.objects.all()
+    parser_classes = (MultiPartParser, FormParser)
+
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):

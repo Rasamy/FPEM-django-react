@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { classNames } from 'primereact/utils';
-import { DataTable } from 'primereact/datatable';
+import { personneTable } from 'primereact/personnetable';
 import { Column } from 'primereact/column';
 import { Toast } from 'primereact/toast';
 import { Button } from 'primereact/button';
@@ -16,11 +16,14 @@ import { Layout } from './Layout';
 import axios from 'axios';
 import { API_URL } from '../constants/constants';
 import { Dropdown } from 'primereact/dropdown';
+import { FileUpload } from 'primereact/fileupload';
+import { DataTable } from 'primereact/datatable';
+
 
 export const PersonneList = () => {
     let emptyPersonne = {
         id: null,
-        image: null,
+        image_url: null,
         firstname: '',
         lastname: '',
         age: 0,
@@ -41,7 +44,7 @@ export const PersonneList = () => {
         { field: 'address', header: 'Adresse' }
     ];
 
-    const exportColumns = cols.map((col) => ({ title: col.header, dataKey: col.field }));
+    const exportColumns = cols.map((col) => ({ title: col.header, personneKey: col.field }));
 
     const [personnes, setPersonnes] = useState(null);
     const [personneDialog, setPersonneDialog] = useState(false);
@@ -69,7 +72,7 @@ export const PersonneList = () => {
          (async () => {
            try {
             const token = localStorage.getItem('access_token')
-            const {data} = await axios.get(   
+            const {personne} = await axios.get(   
                             API_URL + 'personne/', {
                             headers: {
                                 Authorization: `Bearer ${token}`
@@ -81,9 +84,9 @@ export const PersonneList = () => {
                                 Authorization: `Bearer ${token}`
                                 }}
                             );
-            setEglise(eglises.data);
+            setEglise(eglises.personne);
 
-             setPersonnes(data);
+             setPersonnes(personne);
           } catch (e) {
             console.log('not auth'+ e)
           }
@@ -163,6 +166,7 @@ export const PersonneList = () => {
 
     const savePersonne = () => {
         setSubmitted(true);
+        const token = localStorage.getItem("access_token");
 
         if (personne.firstname.trim()) {
             let _personnes = [...personnes];
@@ -177,8 +181,36 @@ export const PersonneList = () => {
                 _personnes[index] = personne;
                 toast.current.show({ severity: 'success', summary: 'Successful', detail: 'personne Updated', life: 3000 });
             } else {
+
+                let form_data = new FormData();
+                if (personne.image_url)
+                    form_data.append("image_url", personne.image_url, personne.image_url.name);
+                form_data.append("firstname", personne.firstname);
+                form_data.append("lastname", personne.lastname);
+                form_data.append("age", personne.age);
+                form_data.append("address", personne.address);
+                form_data.append("contact", personne.contact);
+                form_data.append("is_maried", personne.is_maried);
+
+                form_data.append("is_baptised", personne.is_baptised);
+                form_data.append("situation_familiale", personne.situation_familiale);
+                form_data.append("feu", personne.feu);
+
+                form_data.append("sexe", personne.sexe);
+
+
+                axios.post(API_URL+"personne/",personne, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }}).then(res => {
+                        _personne.id = res.data.id;
+                        toast.current.show({ severity: 'success', summary: 'Successful', detail: 'personne Created', life: 3000 });
+                }).catch( e => {
+                    toast.current.show({ severity: 'error', summary: 'Error', detail: 'erreur d\'enregistrement ' + e.config, life: 3000 });
+                });
+
                 _personne.id = createId();
-                _personne.image = 'personne-placeholder.svg';
+                _personne.image_url = 'personne-placeholder.svg';
                 _personnes.push(_personne);
                 toast.current.show({ severity: 'success', summary: 'Successful', detail: 'personne Created', life: 3000 });
             }
@@ -247,7 +279,7 @@ export const PersonneList = () => {
     const exportExcel = () => {
         import('xlsx').then((xlsx) => {
             const worksheet = xlsx.utils.json_to_sheet(personnes);
-            const workbook = { Sheets: { data: worksheet }, SheetNames: ['data'] };
+            const workbook = { Sheets: { personne: worksheet }, SheetNames: ['personne'] };
             const excelBuffer = xlsx.write(workbook, {
                 bookType: 'xlsx',
                 type: 'array'
@@ -262,11 +294,11 @@ export const PersonneList = () => {
             if (module && module.default) {
                 let EXCEL_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
                 let EXCEL_EXTENSION = '.xlsx';
-                const data = new Blob([buffer], {
+                const personne = new Blob([buffer], {
                     type: EXCEL_TYPE
                 });
 
-                module.default.saveAs(data, fileName + '_export_' + new Date().getTime() + EXCEL_EXTENSION);
+                module.default.saveAs(personne, fileName + '_export_' + new Date().getTime() + EXCEL_EXTENSION);
             }
         });
     }
@@ -325,32 +357,32 @@ export const PersonneList = () => {
     const rightToolbarTemplate = () => {
         return (
         <>
-            <Button type="button" icon="pi pi-file" rounded onClick={() => exportCSV(false)} data-pr-tooltip="CSV" />
-            <Button type="button" icon="pi pi-file-excel" severity="success" rounded onClick={exportExcel} data-pr-tooltip="XLS" />
-            <Button type="button" icon="pi pi-file-pdf" severity="warning" rounded onClick={exportPdf} data-pr-tooltip="PDF" />
+            <Button type="button" icon="pi pi-file" rounded onClick={() => exportCSV(false)} personne-pr-tooltip="CSV" />
+            <Button type="button" icon="pi pi-file-excel" severity="success" rounded onClick={exportExcel} personne-pr-tooltip="XLS" />
+            <Button type="button" icon="pi pi-file-pdf" severity="warning" rounded onClick={exportPdf} personne-pr-tooltip="PDF" />
         </>
         );
     };
 
-    const imageBodyTemplate = (rowData) => {
-        return <img src={`https://primefaces.org/cdn/primereact/images/product/${rowData.image}`} alt={rowData.image} className="shadow-2 border-round" style={{ width: '64px' }} />;
+    const image_urlBodyTemplate = (rowpersonne) => {
+        return <img src={`https://primefaces.org/cdn/primereact/image_urls/product/${rowpersonne.image_url}`} alt={rowpersonne.image_url} className="shadow-2 border-round" style={{ width: '64px' }} />;
     };
 
-    const ageBodyTemplate = (rowData) => {
-        return formatCurrency(rowData.age);
+    const ageBodyTemplate = (rowpersonne) => {
+        return formatCurrency(rowpersonne.age);
     };
 
 
-    const actionBodyTemplate = (rowData) => {
+    const actionBodyTemplate = (rowpersonne) => {
         return (
             <React.Fragment>
-                <Button icon="pi pi-pencil" rounded outlined className="mr-2" onClick={() => editPersonne(rowData)} />
-                <Button icon="pi pi-trash" rounded outlined severity="danger" onClick={() => confirmDeletePersonne(rowData)} />
+                <Button icon="pi pi-pencil" rounded outlined className="mr-2" onClick={() => editPersonne(rowpersonne)} />
+                <Button icon="pi pi-trash" rounded outlined severity="danger" onClick={() => confirmDeletePersonne(rowpersonne)} />
             </React.Fragment>
         );
     };
-    const statusBodyTemplate = (rowData) => {
-        return <span className={`product-badge status-${rowData.feu}`}>{rowData.feu == 1 ? "vivant(e)" : "mort(e)"}</span>;
+    const statusBodyTemplate = (rowpersonne) => {
+        return <span className={`product-badge status-${rowpersonne.feu}`}>{rowpersonne.feu == 1 ? "vivant(e)" : "mort(e)"}</span>;
     }
 
     const header = (
@@ -381,6 +413,18 @@ export const PersonneList = () => {
         </React.Fragment>
     );
 
+
+    const invoiceUploadHandler = ({files}) => {
+        const [file] = files;
+        personne.image_url = file;
+        const fileReader = new FileReader();
+        fileReader.onload = (e) => {
+            savePersonne()
+        };
+        fileReader.readAspersonneURL(file);
+    };
+ 
+
     return (
         <Layout>
             <div>
@@ -389,11 +433,11 @@ export const PersonneList = () => {
                     <Toolbar className="mb-4" left={leftToolbarTemplate} right={rightToolbarTemplate}></Toolbar>
 
                     <DataTable ref={dt} value={personnes} selection={selectedPersonnes} onSelectionChange={(e) => setselectedPersonnes(e.value)}
-                            dataKey="id"  paginator rows={10} rowsPerPageOptions={[5, 10, 25]}
+                            personneKey="id"  paginator rows={10} rowsPerPageOptions={[5, 10, 25]}
                             paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                             currentPageReportTemplate="Showing {first} to {last} of {totalRecords} products" globalFilter={globalFilter} header={header}>
                         <Column selectionMode="multiple" exportable={false}></Column>
-                        <Column field="image" header="Image" body={imageBodyTemplate}></Column>
+                        <Column field="image_url" header="Photo" body={image_urlBodyTemplate}></Column>
                         <Column field="firstname" header="Nom" sortable style={{ minWidth: '16rem' }}></Column>
                         <Column field="lastname" header="Prénom" sortable style={{ minWidth: '16rem' }}></Column>
                         <Column field="age" header="age" body={ageBodyTemplate} sortable style={{ minWidth: '8rem' }}></Column>
@@ -409,7 +453,7 @@ export const PersonneList = () => {
                 </div>
 
                 <Dialog visible={personneDialog} style={{ width: '32vw' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Product Details" modal className="p-fluid" footer={personneDialogFooter} onHide={hideDialog}>
-                    {personne.image && <img src={`https://primefaces.org/cdn/primereact/images/product/${personne.image}`} alt={personne.image} className="product-image block m-auto pb-3" />}
+                    {personne.image_url && <img src={`https://primefaces.org/cdn/primereact/image_urls/product/${personne.image_url}`} alt={personne.image_url} className="product-image_url block m-auto pb-3" />}
                     
                     <div className="card flex justify-content-center">
                         <label htmlFor="name" className="font-bold">
@@ -465,6 +509,19 @@ export const PersonneList = () => {
                             <InputNumber id="address" value={personne.address} onValueChange={(e) => onInputNumberChange(e, 'address')} />
                         </div>
                     </div>
+
+                    <div className="field">
+                    <div className="card">
+                        <FileUpload name="invoice"
+                            accept="image/*"
+                            customUpload={true}
+                            uploadHandler={invoiceUploadHandler}
+                            mode="basic"
+                            auto={true}
+                            chooseLabel="Importer l'image de la personne"/>                    
+                        </div>
+                    </div>
+
                 </Dialog>
 
                 <Dialog visible={deletePersonneDialog} style={{ width: '32rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Confirm" modal footer={deletePersonneDialogFooter} onHide={hidedeletePersonneDialog}>

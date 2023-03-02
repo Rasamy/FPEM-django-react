@@ -1,0 +1,34 @@
+[
+    {
+      "model": "recencement.Eglise",
+      "pk": 1,
+      "fields": {
+        "name": "FPEM Antohomadinika Antsalovana (Foibe)",
+        "contact": "032 00 000 00"
+      }
+    },
+    {
+        "model": "recencement.Eglise",
+        "pk": 2,
+        "fields": {
+          "name": "FPEM Ankazobe Fihaonana",
+          "contact": "032 00 000 00"
+        }
+      },
+      {
+        "model": "recencement.Eglise",
+        "pk": 3,
+        "fields": {
+          "name": "FPEM Analabe Fihaonana",
+          "contact": "032 00 000 00"
+        }
+      },
+      {
+        "model": "recencement.Eglise",
+        "pk": 4,
+        "fields": {
+          "name": "FPEM Maevasoa Brickaville",
+          "contact": "032 00 000 00"
+        }
+    }
+  ]

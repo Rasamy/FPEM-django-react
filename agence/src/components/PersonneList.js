@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { classNames } from 'primereact/utils';
-import { personneTable } from 'primereact/personnetable';
 import { Column } from 'primereact/column';
 import { Toast } from 'primereact/toast';
 import { Button } from 'primereact/button';
@@ -14,7 +13,7 @@ import { InputText } from 'primereact/inputtext';
 import { Tag } from 'primereact/tag';
 import { Layout } from './Layout';
 import axios from 'axios';
-import { API_URL } from '../constants/constants';
+import { API_URL, FEU, SEXE, SITUATIONFAMILIALE, STATUSFIDELE, STATUSMARIED } from '../constants/constants';
 import { Dropdown } from 'primereact/dropdown';
 import { FileUpload } from 'primereact/fileupload';
 import { DataTable } from 'primereact/datatable';
@@ -30,10 +29,13 @@ export const PersonneList = () => {
         address: "",
         contact: '',
         is_maried: '',
-        is_baptised:'',
-        situation_familiale:'',
-        feu:1,
-        sexe:0,
+        is_baptised:1,
+        situation_familiale:"",
+        feu:"",
+        sexe:"",
+        is_fidele: "",
+        author: 2,
+        baptheme:""
 
     };
 
@@ -46,7 +48,7 @@ export const PersonneList = () => {
 
     const exportColumns = cols.map((col) => ({ title: col.header, personneKey: col.field }));
 
-    const [personnes, setPersonnes] = useState(null);
+    const [personnes, setPersonnes] = useState([]);
     const [personneDialog, setPersonneDialog] = useState(false);
     const [deletePersonneDialog, setDeletePersonneDialog] = useState(false);
     const [deletePersonnesDialog, setDeletePersonnesDialog] = useState(false);
@@ -60,6 +62,17 @@ export const PersonneList = () => {
 
     const [eglise, setEglise] = useState(null);
     const [selectedEglise, setSelectedEglise] = useState(null);
+    const [famille, setFamille] = useState(null);
+    const [selectedFamille, setSelectedFamille] = useState(null);
+    const [baptheme, setBaptheme] = useState(null);
+    const [selectedBaptheme, setSelectedBaptheme] = useState(null);
+    const [selectedSituationFamiliale, setSelectedSituationFamiliale] = useState(null);
+
+    const [selectedSexe, setSelectedSexe] = useState(null);
+    const [selectedFeu, setSelectedFeu] = useState(null);
+    const [selectedFidele, setSelectedFidele] = useState(null);
+    const [selectedSituationMatrimoniale, setSelectedSituationMatrimoniale] = useState(null);
+
     const [filterValue, setFilterValue] = useState('');
     const filterInputRef = useRef();
 
@@ -69,48 +82,97 @@ export const PersonneList = () => {
             window.location.href = '/login'
         }
         else{
+
          (async () => {
            try {
             const token = localStorage.getItem('access_token')
-            const {personne} = await axios.get(   
-                            API_URL + 'personne/', {
-                            headers: {
-                                Authorization: `Bearer ${token}`
-                                }}
+            const personne_list = await axios.get(   
+                                API_URL + 'personne/', {
+                                headers: {
+                                    Authorization: `Bearer ${token}`
+                                    }}
                            );
-            const eglises = await axios.get(   
-                            API_URL + 'eglise/', {
-                            headers: {
-                                Authorization: `Bearer ${token}`
+            const eglises_list = await axios.get(   
+                                API_URL + 'eglise/', {
+                                headers: {
+                                    Authorization: `Bearer ${token}`
+                                    }}
+                            );
+            const familles_list = await axios.get(   
+                                API_URL + 'famille/', {
+                                headers: {
+                                    Authorization: `Bearer ${token}`
+                            }}
+            );
+            const bapthemes_list = await axios.get(   
+                                API_URL + 'bapteme/', {
+                                headers: {
+                                    Authorization: `Bearer ${token}`
                                 }}
                             );
-            setEglise(eglises.personne);
-
-             setPersonnes(personne);
+            const _familles_list = (familles_list?.data).reduce((acc, {id, firstname, lastname}) => {
+                const name = firstname +" "+lastname;
+                return [...acc, {id: id, name: name}]
+            },[])
+            setFamille(_familles_list);
+            setBaptheme(bapthemes_list.data);
+            setEglise(eglises_list.data);
+            setPersonnes(personne_list.data);
           } catch (e) {
             console.log('not auth'+ e)
           }
          })()};
     }, []);
 
-    const selectedEgliseTemplate = (option, props) => {
-        if (option) {
+    const selectedTemplate = (option, props) => {
+        if(option){
             return (
                 <div className="flex align-items-center">
                     <div>{option.name}</div>
                 </div>
             );
         }
+        // if(option.name){
+        //     return (
+        //         <div className="flex align-items-center">
+        //             <div>{option.name}</div>
+        //         </div>
+        //     );
+        // }
+        // else if(option.firstname){
+        //     return (
+        //         <div className="flex align-items-center">
+        //             <div>{option.firstname} {option.lastname} </div>
+        //         </div>
+        //     );
+        // }
 
         return <span>{props.placeholder}</span>;
     };
 
-    const egliseOptionTemplate = (option) => {
-        return (
-            <div className="flex align-items-center">
-                <div>{option.name}</div>
-            </div>
-        );
+    const optionTemplate = (option) => {
+        if(option){
+            return (
+                <div className="flex align-items-center">
+                    <div>{option.name}</div>
+                </div>
+            );
+        }
+        // if(option.name){
+        //     return (
+        //         <div className="flex align-items-center">
+        //             <div>{option.name}</div>
+        //         </div>
+        //     );
+        // }
+        // else if(option.firstname){
+        //     return (
+        //         <div className="flex align-items-center">
+        //             <div>{option.firstname} {option.lastname} </div>
+        //         </div>
+        //     );
+        // }
+        
     }
 
     const filterTemplate = (options) => {
@@ -138,7 +200,16 @@ export const PersonneList = () => {
 
     const setEgliseId = (e) => {
         setSelectedEglise(e.target.value);
-        
+    }
+
+    const setFamilleId = (e) => {
+        setSelectedFamille(e.target.value);
+    }
+    const setBapthemeId = (e) => {
+        setSelectedBaptheme(e.target.value)
+    }
+    const setSituationFamilialeValueId = (e) => {
+        setSelectedSituationFamiliale(e.value)
     }
 
     const formatCurrency = (value) => {
@@ -175,13 +246,31 @@ export const PersonneList = () => {
             if(selectedEglise !== null){
                 personne.eglise = selectedEglise.id
             }
+
+            if(selectedFamille !== null){
+                personne.famille = selectedFamille.id
+            }
+
+            if(selectedBaptheme !== null){
+                personne.baptheme = selectedBaptheme.id
+            }
+            if(selectedSituationFamiliale !== null){
+                personne.situation_familiale = selectedSituationFamiliale
+            }
+            
+            personne.is_fidele = selectedFidele !== null ? selectedFidele : null;
+            personne.feu = selectedFeu !== null ? selectedFeu : null
+            personne.is_maried = selectedSituationMatrimoniale !== null ? selectedSituationMatrimoniale : null
+            personne.sexe = selectedSexe !== null ? selectedSexe : null
+
+
             if (personne.id) {
                 const index = findIndexById(personne.id);
-
                 _personnes[index] = personne;
                 toast.current.show({ severity: 'success', summary: 'Successful', detail: 'personne Updated', life: 3000 });
             } else {
 
+                console.log(personne.image_url);
                 let form_data = new FormData();
                 if (personne.image_url)
                     form_data.append("image_url", personne.image_url, personne.image_url.name);
@@ -193,13 +282,15 @@ export const PersonneList = () => {
                 form_data.append("is_maried", personne.is_maried);
 
                 form_data.append("is_baptised", personne.is_baptised);
-                form_data.append("situation_familiale", personne.situation_familiale);
+                form_data.append("situation_familiale", personne.situation_familiale );
                 form_data.append("feu", personne.feu);
+                form_data.append("famille", personne.famille);
+                form_data.append("eglise", personne.eglise);
+                form_data.append("baptheme", personne.baptheme);
 
                 form_data.append("sexe", personne.sexe);
 
-
-                axios.post(API_URL+"personne/",personne, {
+                axios.post(API_URL+"personne/",form_data, {
                     headers: {
                         Authorization: `Bearer ${token}`
                     }}).then(res => {
@@ -327,6 +418,13 @@ export const PersonneList = () => {
         setPersonne(_personne);
     };
 
+    const onSexeValueChange = (e) => {
+        let _personne = { ...personne };
+
+        _personne['sexe'] = e.value;
+        setPersonne(_personne);
+    };
+
     const onInputChange = (e, name) => {
         const val = (e.target && e.target.value) || '';
         let _personne = { ...personne };
@@ -364,25 +462,25 @@ export const PersonneList = () => {
         );
     };
 
-    const image_urlBodyTemplate = (rowpersonne) => {
-        return <img src={`https://primefaces.org/cdn/primereact/image_urls/product/${rowpersonne.image_url}`} alt={rowpersonne.image_url} className="shadow-2 border-round" style={{ width: '64px' }} />;
+    const image_urlBodyTemplate = (rowData) => {
+        return <img src={`https://primefaces.org/cdn/primereact/image_urls/product/${rowData.image_url}`} alt={rowData.image_url} className="shadow-2 border-round" style={{ width: '64px' }} />;
     };
 
-    const ageBodyTemplate = (rowpersonne) => {
-        return formatCurrency(rowpersonne.age);
+    const ageBodyTemplate = (rowData) => {
+        return formatCurrency(rowData.age);
     };
 
 
-    const actionBodyTemplate = (rowpersonne) => {
+    const actionBodyTemplate = (rowData) => {
         return (
             <React.Fragment>
-                <Button icon="pi pi-pencil" rounded outlined className="mr-2" onClick={() => editPersonne(rowpersonne)} />
-                <Button icon="pi pi-trash" rounded outlined severity="danger" onClick={() => confirmDeletePersonne(rowpersonne)} />
+                <Button icon="pi pi-pencil" rounded outlined className="mr-2" onClick={() => editPersonne(rowData)} />
+                <Button icon="pi pi-trash" rounded outlined severity="danger" onClick={() => confirmDeletePersonne(rowData)} />
             </React.Fragment>
         );
     };
-    const statusBodyTemplate = (rowpersonne) => {
-        return <span className={`product-badge status-${rowpersonne.feu}`}>{rowpersonne.feu == 1 ? "vivant(e)" : "mort(e)"}</span>;
+    const statusBodyTemplate = (rowData) => {
+        return <span className={`product-badge status-${rowData.feu}`}>{rowData.feu === 1 ? "vivant(e)" : "mort(e)"}</span>;
     }
 
     const header = (
@@ -416,14 +514,28 @@ export const PersonneList = () => {
 
     const invoiceUploadHandler = ({files}) => {
         const [file] = files;
-        personne.image_url = file;
-        const fileReader = new FileReader();
-        fileReader.onload = (e) => {
-            savePersonne()
-        };
-        fileReader.readAspersonneURL(file);
+        // const fileReader = new FileReader();
+        console.log(file);
+        personne.image_url = file
+        // fileReader.onload = (e) => {
+        //     uploadInvoice(e.target.result);
+        //     personne.image_url = e.target.result
+        // };
+        // fileReader.readAsDataURL(file);
     };
  
+
+    // const uploadInvoice = async (invoiceFile) => {
+    //     let formData = new FormData();
+    //     formData.append('image_url', invoiceFile);
+    
+    //     const response = await fetch(`orders/${orderId}/uploadInvoiceFile`,
+    //         {
+    //             method: 'POST',
+    //             body: formData
+    //         },
+    //     );
+    // };
 
     return (
         <Layout>
@@ -433,7 +545,7 @@ export const PersonneList = () => {
                     <Toolbar className="mb-4" left={leftToolbarTemplate} right={rightToolbarTemplate}></Toolbar>
 
                     <DataTable ref={dt} value={personnes} selection={selectedPersonnes} onSelectionChange={(e) => setselectedPersonnes(e.value)}
-                            personneKey="id"  paginator rows={10} rowsPerPageOptions={[5, 10, 25]}
+                            dataKey="id"  paginator rows={10} rowsPerPageOptions={[5, 10, 25]}
                             paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                             currentPageReportTemplate="Showing {first} to {last} of {totalRecords} products" globalFilter={globalFilter} header={header}>
                         <Column selectionMode="multiple" exportable={false}></Column>
@@ -452,15 +564,38 @@ export const PersonneList = () => {
                     </DataTable>
                 </div>
 
-                <Dialog visible={personneDialog} style={{ width: '32vw' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Product Details" modal className="p-fluid" footer={personneDialogFooter} onHide={hideDialog}>
+                <Dialog visible={personneDialog} style={{ width: '32vw' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Action sur les personnes" modal className="p-fluid" footer={personneDialogFooter} onHide={hideDialog}>
                     {personne.image_url && <img src={`https://primefaces.org/cdn/primereact/image_urls/product/${personne.image_url}`} alt={personne.image_url} className="product-image_url block m-auto pb-3" />}
                     
                     <div className="card flex justify-content-center">
                         <label htmlFor="name" className="font-bold">
                             Nom de l'église
                         </label>
-                        <Dropdown value={selectedEglise} onChange={setEgliseId} options={eglise} optionLabel="name" placeholder="Choisissez un nom de famille" 
-                ilter valueTemplate={selectedEgliseTemplate} itemTemplate={egliseOptionTemplate} className="w-full md:w-14rem" filter filterTemplate={filterTemplate} />
+                        <Dropdown value={selectedEglise} onChange={setEgliseId} options={eglise} optionLabel="name" placeholder="Choisissez un nom d'église" 
+                ilter valueTemplate={selectedTemplate} itemTemplate={optionTemplate} className="w-full md:w-14rem" filter filterTemplate={filterTemplate} />
+                    </div>
+
+                    <div className="card flex justify-content-center">
+                        <label htmlFor="name" className="font-bold">
+                            Nom de famille
+                        </label>
+                        <Dropdown value={selectedFamille} onChange={setFamilleId} options={famille} optionLabel="name" placeholder="Choisissez un nom de famille" 
+                ilter valueTemplate={selectedTemplate} itemTemplate={optionTemplate} className="w-full md:w-14rem" filter filterTemplate={filterTemplate} />
+                    </div>
+
+                    <div className="card flex justify-content-center">
+                        <label htmlFor="name" className="font-bold">
+                            Promotion baptise
+                        </label>
+                        <Dropdown value={selectedBaptheme} onChange={setBapthemeId} options={baptheme} optionLabel="name" placeholder="Choisissez un nom de promotion du baptise" 
+                ilter valueTemplate={selectedTemplate} itemTemplate={optionTemplate} className="w-full md:w-14rem" filter filterTemplate={filterTemplate} />
+                    </div>
+                    <div className="card flex justify-content-center">
+                        <label htmlFor="name" className="font-bold">
+                            Situation Familiale
+                        </label>
+                        <Dropdown value={selectedSituationFamiliale} onChange={setSituationFamilialeValueId} options={SITUATIONFAMILIALE} optionLabel="name" placeholder="Situation familiale" 
+                ilter valueTemplate={selectedTemplate} itemTemplate={optionTemplate} className="w-full md:w-14rem" filter filterTemplate={filterTemplate} />
                     </div>
 
                     <div className='grid'>
@@ -479,47 +614,73 @@ export const PersonneList = () => {
                             {submitted && !personne.lastname && <small className="p-error">Le champs est requis.</small>}
                         </div>
                     </div>
-                    
-
-                    <div className="field">
-                        <label className="mb-3 font-bold">Feu</label>
-                        <div className="formgrid grid">
-                            <div className="field-radiobutton col-6">
-                                <RadioButton inputId="category1" name="category" value="Accessories" onChange={onCategoryChange} checked={personne.feu === 1} />
-                                <label htmlFor="category1">Vivant(e)</label>
-                            </div>
-                            <div className="field-radiobutton col-6">
-                                <RadioButton inputId="category2" name="category" value="Clothing" onChange={onCategoryChange} checked={personne.feu === 0} />
-                                <label htmlFor="category2">Mort(e)</label>
-                            </div>
-                        </div>
-                    </div>
-
                     <div className="grid">
                         <div className="field col">
                             <label htmlFor="age" className="font-bold">
                                 Age
                             </label>
-                            <InputNumber id="age" value={personne.age} onValueChange={(e) => onInputNumberChange(e, 'age')} mode="currency" currency="USD" locale="en-US" />
+                            <InputNumber id="age" value={personne.age} onChange={(e) => onInputNumberChange(e, 'age')} />
                         </div>
                         <div className="field col">
                             <label htmlFor="address" className="font-bold">
                                 Adresse
                             </label>
-                            <InputNumber id="address" value={personne.address} onValueChange={(e) => onInputNumberChange(e, 'address')} />
+                            <InputText id="address" value={personne.address} onChange={(e) => onInputChange(e, 'address')} />
                         </div>
                     </div>
-
-                    <div className="field">
-                    <div className="card">
-                        <FileUpload name="invoice"
-                            accept="image/*"
-                            customUpload={true}
-                            uploadHandler={invoiceUploadHandler}
-                            mode="basic"
-                            auto={true}
-                            chooseLabel="Importer l'image de la personne"/>                    
+                    <div className='field'>
+                        <div className="col">
+                            <label htmlFor="name" className="font-bold">
+                                Contact 
+                            </label>
+                            <InputText id="contact" value={personne.contact} onChange={(e) => onInputChange(e, 'contact')} required autoFocus className={classNames({ 'p-invalid': submitted && !personne.contact })} />
+                            {submitted && !personne.contact && <small className="p-error">Le champs est requis.</small>}
                         </div>
+                    </div>
+                    <div className="card flex justify-content-center">
+                        <label htmlFor="name" className="font-bold">
+                            sexe
+                        </label>
+                        <Dropdown value={selectedSexe} onChange={(e) => {setSelectedSexe(e.value)}} options={SEXE} optionLabel="name" placeholder="Situation familiale" 
+                ilter valueTemplate={selectedTemplate} itemTemplate={optionTemplate} className="w-full md:w-14rem" filter filterTemplate={filterTemplate} />
+                    </div>
+          
+                    <div className="card flex justify-content-center">
+                        <label htmlFor="name" className="font-bold">
+                            Situation matrimoniale
+                        </label>
+                        <Dropdown value={selectedSituationMatrimoniale} onChange={(e) => {setSelectedSituationMatrimoniale(e.value)}} options={STATUSMARIED} optionLabel="name" placeholder="Situation familiale" 
+                ilter valueTemplate={selectedTemplate} itemTemplate={optionTemplate} className="w-full md:w-14rem" filter filterTemplate={filterTemplate} />
+                    </div>
+                    <div className="card flex justify-content-center">
+                        <label htmlFor="name" className="font-bold">
+                            Fidélité par rapport à l'église
+                        </label>
+                        <Dropdown value={selectedFidele} onChange={(e) => {setSelectedFidele(e.value)}} options={STATUSFIDELE} optionLabel="name" placeholder="Situation familiale" 
+                ilter valueTemplate={selectedTemplate} itemTemplate={optionTemplate} className="w-full md:w-14rem" filter filterTemplate={filterTemplate} />
+                    </div>
+
+                    <div className="card flex justify-content-center">
+                        <label htmlFor="name" className="font-bold">
+                            Feu
+                        </label>
+                        <Dropdown value={selectedFeu} onChange={(e) => setSelectedFeu(e.value)} options={FEU} optionLabel="name" placeholder="Situation familiale" 
+                ilter valueTemplate={selectedTemplate} itemTemplate={optionTemplate} className="w-full md:w-14rem" filter filterTemplate={filterTemplate} />
+                    </div>
+
+                    
+
+                    <div className="card">
+            
+                        <FileUpload 
+                            name="demo[]" 
+                            multiple accept="image/*"                             
+                            uploadHandler={invoiceUploadHandler}
+                            customUpload
+                            maxFileSize={1000000} 
+                            auto={true}
+                            emptyTemplate={<p className="m-0">Importer l'image de la personne</p>} />
+
                     </div>
 
                 </Dialog>

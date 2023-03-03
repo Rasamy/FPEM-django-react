@@ -11,7 +11,6 @@ import { Dropdown } from 'primereact/dropdown';
 import { Layout } from './Layout';
 import axios from 'axios';
 import { API_URL } from '../constants/constants';
-import api from '../services/api';
 
 export const Famille = () => {
     let emptyFamille = {

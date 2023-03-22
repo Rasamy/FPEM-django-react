@@ -22,6 +22,15 @@ export const Login = () => {
          localStorage.clear();
          localStorage.setItem('access_token', data.access);
          localStorage.setItem('refresh_token', data.refresh);
+
+         const data_user = await axios.get(   
+            API_URL + 'token/user/', {
+            headers: {
+                Authorization: `Bearer ${data.access}`
+                }}
+            );
+        localStorage.setItem("user",JSON.stringify(data_user.data));
+        
          axios.defaults.headers.common['Authorization'] = 
                                          `Bearer ${data['access']}`;
         

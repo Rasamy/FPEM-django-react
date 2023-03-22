@@ -17,6 +17,7 @@ import { API_URL, FEU, SEXE, SITUATIONFAMILIALE, STATUSFIDELE, STATUSMARIED } fr
 import { Dropdown } from 'primereact/dropdown';
 import { FileUpload } from 'primereact/fileupload';
 import { DataTable } from 'primereact/datatable';
+import { fetchImageFromUrl } from '../utils/Util';
 
 
 export const PersonneList = () => {
@@ -267,10 +268,39 @@ export const PersonneList = () => {
             if (personne.id) {
                 const index = findIndexById(personne.id);
                 _personnes[index] = personne;
-                toast.current.show({ severity: 'success', summary: 'Successful', detail: 'personne Updated', life: 3000 });
+                let form_data = new FormData();
+                if (personne.image_url)
+                    form_data.append("image_url", personne.image_url, personne.image_url.name);
+                form_data.append("firstname", personne.firstname);
+                form_data.append("lastname", personne.lastname);
+                form_data.append("age", personne.age);
+                form_data.append("address", personne.address);
+                form_data.append("contact", personne.contact);
+                form_data.append("is_maried", personne.is_maried);
+
+                form_data.append("is_baptised", personne.is_baptised);
+                form_data.append("situation_familiale", personne.situation_familiale );
+                form_data.append("feu", personne.feu);
+                form_data.append("famille", personne.famille);
+                form_data.append("eglise", personne.eglise);
+                form_data.append("baptheme", personne.baptheme);
+
+                form_data.append("sexe", personne.sexe);
+
+                axios.put(API_URL+"personne/"+personne.id +"/",form_data, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }}).then(res => {
+                        _personne.id = res.data.id;
+                        _personne.image_url = res.data.image_url;
+
+                        toast.current.show({ severity: 'success', summary: 'Successful', detail: 'personne Created', life: 3000 });
+                }).catch( e => {
+                    toast.current.show({ severity: 'error', summary: 'Error', detail: 'erreur d\'enregistrement ' + e.config, life: 3000 });
+                });
+
             } else {
 
-                console.log(personne.image_url);
                 let form_data = new FormData();
                 if (personne.image_url)
                     form_data.append("image_url", personne.image_url, personne.image_url.name);
@@ -295,13 +325,13 @@ export const PersonneList = () => {
                         Authorization: `Bearer ${token}`
                     }}).then(res => {
                         _personne.id = res.data.id;
+                        _personne.image_url = res.data.image_url;
+                        
                         toast.current.show({ severity: 'success', summary: 'Successful', detail: 'personne Created', life: 3000 });
                 }).catch( e => {
                     toast.current.show({ severity: 'error', summary: 'Error', detail: 'erreur d\'enregistrement ' + e.config, life: 3000 });
                 });
 
-                _personne.id = createId();
-                _personne.image_url = 'personne-placeholder.svg';
                 _personnes.push(_personne);
                 toast.current.show({ severity: 'success', summary: 'Successful', detail: 'personne Created', life: 3000 });
             }
@@ -411,20 +441,6 @@ export const PersonneList = () => {
         toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Products Deleted', life: 3000 });
     };
 
-    const onCategoryChange = (e) => {
-        let _personne = { ...personne };
-
-        _personne['feu'] = e.value;
-        setPersonne(_personne);
-    };
-
-    const onSexeValueChange = (e) => {
-        let _personne = { ...personne };
-
-        _personne['sexe'] = e.value;
-        setPersonne(_personne);
-    };
-
     const onInputChange = (e, name) => {
         const val = (e.target && e.target.value) || '';
         let _personne = { ...personne };
@@ -463,7 +479,13 @@ export const PersonneList = () => {
     };
 
     const image_urlBodyTemplate = (rowData) => {
-        return <img src={`https://primefaces.org/cdn/primereact/image_urls/product/${rowData.image_url}`} alt={rowData.image_url} className="shadow-2 border-round" style={{ width: '64px' }} />;
+        if(rowData.image_url !== null){
+            
+            return <img src={rowData.image_url} alt={rowData.image_url} className="shadow-2 border-round" style={{ width: '64px' }} />;
+        }
+        else{
+            return <img src="/assets/logo192.png" alt="avatar" className="shadow-2 border-round" style={{ width: '64px' }} />;
+        }
     };
 
     const ageBodyTemplate = (rowData) => {
@@ -485,10 +507,10 @@ export const PersonneList = () => {
 
     const header = (
         <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
-            <h4 className="m-0">Manage Products</h4>
+            <h4 className="m-0">Liste des personnes</h4>
             <span className="p-input-icon-left">
                 <i className="pi pi-search" />
-                <InputText type="search" onInput={(e) => setGlobalFilter(e.target.value)} placeholder="Search..." />
+                <InputText type="search" onInput={(e) => setGlobalFilter(e.target.value)} placeholder="Chercher des personnes..." />
             </span>
         </div>
     );
@@ -514,28 +536,9 @@ export const PersonneList = () => {
 
     const invoiceUploadHandler = ({files}) => {
         const [file] = files;
-        // const fileReader = new FileReader();
-        console.log(file);
         personne.image_url = file
-        // fileReader.onload = (e) => {
-        //     uploadInvoice(e.target.result);
-        //     personne.image_url = e.target.result
-        // };
-        // fileReader.readAsDataURL(file);
     };
  
-
-    // const uploadInvoice = async (invoiceFile) => {
-    //     let formData = new FormData();
-    //     formData.append('image_url', invoiceFile);
-    
-    //     const response = await fetch(`orders/${orderId}/uploadInvoiceFile`,
-    //         {
-    //             method: 'POST',
-    //             body: formData
-    //         },
-    //     );
-    // };
 
     return (
         <Layout>

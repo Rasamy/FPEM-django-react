@@ -11,6 +11,7 @@ import { Dropdown } from 'primereact/dropdown';
 import { Layout } from './Layout';
 import axios from 'axios';
 import { API_URL } from '../constants/constants';
+import { FileUpload } from 'primereact/fileupload';
 
 export const Famille = () => {
     let emptyFamille = {
@@ -19,7 +20,8 @@ export const Famille = () => {
         lastname: '',
         contact: "",
         address: "",
-        eglise: 1
+        eglise: 1,
+        image_url: null
     };
 
     const cols = [
@@ -171,19 +173,30 @@ export const Famille = () => {
                 });
 
             } else {
-                _famille.image = 'famille-placeholder.svg';
-                _familles.push(_famille);
 
-                axios.post(API_URL+"famille/",famille, {
+
+                let form_data = new FormData();
+                if (famille.image_url)
+                    form_data.append("image_url", famille.image_url, famille.image_url.name);
+                form_data.append("firstname", famille.firstname);
+                form_data.append("lastname", famille.lastname);
+                form_data.append("address", famille.address);
+                form_data.append("contact", famille.contact);
+                form_data.append("eglise", famille.eglise);
+
+
+                axios.post(API_URL+"famille/",form_data, {
                     headers: {
                         Authorization: `Bearer ${token}`
                     }}).then(res => {
-                        console.log(res.data.id)
                         _famille.id = res.data.id;
                         toast.current.show({ severity: 'success', summary: 'Successful', detail: 'famille Created', life: 3000 });
                 }).catch( e => {
                     toast.current.show({ severity: 'error', summary: 'Error', detail: 'erreur d\'enregistrement ' + e.config, life: 3000 });
                 });
+
+                _famille.image = 'famille-placeholder.svg';
+                _familles.push(_famille);
                
             }
 
@@ -253,7 +266,7 @@ export const Famille = () => {
                 const doc = new jsPDF.default(0, 0);
 
                 doc.autoTable(exportColumns, familles);
-                doc.save('personnes.pdf');
+                doc.save('familles.pdf');
             });
         });
     };
@@ -318,15 +331,6 @@ export const Famille = () => {
         setFamille(_famille);
     };
 
-    const onInputNumberChange = (e, name) => {
-        const val = e.value || 0;
-        let _famille = { ...famille };
-
-        _famille[`${name}`] = val;
-
-        setFamille(_famille);
-    };
-
     const leftToolbarTemplate = () => {
         return (
             <div className="flex flex-wrap gap-2">
@@ -346,7 +350,13 @@ export const Famille = () => {
         );
     };
     const imageBodyTemplate = (rowData) => {
-        return <img src={`https://primefaces.org/cdn/primereact/images/product/${rowData.image}`} alt={rowData.image} className="shadow-2 border-round" style={{ width: '64px' }} />;
+        if(rowData.image_url !== null){
+            
+            return <img src={rowData.image_url} alt={rowData.image_url} className="shadow-2 border-round" style={{ width: '64px' }} />;
+        }
+        else{
+            return <img src="/assets/logo192.png" alt="avatar" className="shadow-2 border-round" style={{ width: '64px' }} />;
+        }    
     };
 
     const actionBodyTemplate = (rowData) => {
@@ -358,28 +368,12 @@ export const Famille = () => {
         );
     };
 
-    const getSeverity = (product) => {
-        switch (product.inventoryStatus) {
-            case 'INSTOCK':
-                return 'success';
-
-            case 'LOWSTOCK':
-                return 'warning';
-
-            case 'OUTOFSTOCK':
-                return 'danger';
-
-            default:
-                return null;
-        }
-    };
-
     const header = (
         <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
-            <h4 className="m-0">Manage Products</h4>
+            <h4 className="m-0">Liste des familles</h4>
             <span className="p-input-icon-left">
                 <i className="pi pi-search" />
-                <InputText type="search" onInput={(e) => setGlobalFilter(e.target.value)} placeholder="Search..." />
+                <InputText type="search" onInput={(e) => setGlobalFilter(e.target.value)} placeholder="Taper un nom de famille..." />
             </span>
         </div>
     );
@@ -401,6 +395,10 @@ export const Famille = () => {
             <Button label="Confirmer" icon="pi pi-check" severity="danger" onClick={deleteselectedfamilles} />
         </React.Fragment>
     );
+    const invoiceUploadHandler = ({files}) => {
+        const [file] = files;
+        famille.image_url = file
+    };
 
     return (
         <Layout>
@@ -414,7 +412,7 @@ export const Famille = () => {
                             paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                             currentPageReportTemplate="Showing {first} to {last} of {totalRecords} products" globalFilter={globalFilter} header={header}>
                         <Column selectionMode="multiple" exportable={false}></Column>
-                        <Column field="image" header="Image" body={imageBodyTemplate}></Column>
+                        <Column field="image_url" header="Photo" body={imageBodyTemplate}></Column>
                         <Column field="firstname" header="Nom" sortable style={{ minWidth: '16rem' }}></Column>
                         <Column field="lastname" header="Prénom" sortable style={{ minWidth: '16rem' }}></Column>
                         <Column field="address" header="Adresse" sortable style={{ minWidth: '12rem' }}></Column>
@@ -460,6 +458,20 @@ export const Famille = () => {
                         <InputText id="address" value={famille.address} onChange={(e) => onInputChange(e, 'address')} required autoFocus className={classNames({ 'p-invalid': submitted && !famille.address })} />
                         {submitted && !famille.address && <small className="p-error">Le champs est requis.</small>}
                     </div>
+
+                    <div className="card">
+            
+                        <FileUpload 
+                            name="demo[]" 
+                            multiple accept="image/*"                             
+                            uploadHandler={invoiceUploadHandler}
+                            customUpload
+                            maxFileSize={1000000} 
+                            auto={true}
+                            emptyTemplate={<p className="m-0">Importer l'image de la famille</p>} />
+
+                    </div>
+
                 </Dialog>
 
                 <Dialog visible={deletefamilleDialog} style={{ width: '32rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Confirm" modal footer={deletefamilleDialogFooter} onHide={hidedeletefamilleDialog}>

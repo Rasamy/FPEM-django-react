@@ -162,3 +162,4 @@ SIMPLE_JWT = {
   }
 
 MEDIA_URL = '/medias/'
+MEDIA_ROOT  = os.path.join(BASE_DIR, 'medias')

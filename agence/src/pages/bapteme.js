@@ -235,16 +235,6 @@ export const Bapteme = () => {
         return index;
     };
 
-    const createId = () => {
-        let id = '';
-        let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-
-        for (let i = 0; i < 5; i++) {
-            id += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-
-        return id;
-    };
 
     const exportPdf = () => {
         import('jspdf').then((jsPDF) => {
@@ -301,13 +291,6 @@ export const Bapteme = () => {
         toast.current.show({ severity: 'success', summary: 'Successful', detail: 'Products Deleted', life: 3000 });
     };
 
-    const onCategoryChange = (e) => {
-        let _bapteme = { ...bapteme };
-
-        _bapteme['feu'] = e.value;
-        setBapteme(_bapteme);
-    };
-
     const onInputChange = (e, name) => {
         const val = (e.target && e.target.value) || '';
         let _bapteme = { ...bapteme };
@@ -317,14 +300,6 @@ export const Bapteme = () => {
         setBapteme(_bapteme);
     };
 
-    const onInputNumberChange = (e, name) => {
-        const val = e.value || 0;
-        let _bapteme = { ...bapteme };
-
-        _bapteme[`${name}`] = val;
-
-        setBapteme(_bapteme);
-    };
 
     const leftToolbarTemplate = () => {
         return (
@@ -355,28 +330,12 @@ export const Bapteme = () => {
         );
     };
 
-    const getSeverity = (product) => {
-        switch (product.inventoryStatus) {
-            case 'INSTOCK':
-                return 'success';
-
-            case 'LOWSTOCK':
-                return 'warning';
-
-            case 'OUTOFSTOCK':
-                return 'danger';
-
-            default:
-                return null;
-        }
-    };
-
     const header = (
         <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
-            <h4 className="m-0">Manage Products</h4>
+            <h4 className="m-0">Liste des baptemes</h4>
             <span className="p-input-icon-left">
                 <i className="pi pi-search" />
-                <InputText type="search" onInput={(e) => setGlobalFilter(e.target.value)} placeholder="Search..." />
+                <InputText type="search" onInput={(e) => setGlobalFilter(e.target.value)} placeholder="Taper quelque mots..." />
             </span>
         </div>
     );

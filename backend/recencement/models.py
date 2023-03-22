@@ -41,7 +41,10 @@ now = datetime.datetime.now()
 
 # lets us explicitly set upload path and filename
 def upload_to(instance, filename):
-    return 'images/{filename}'.format(filename=filename)
+    return 'personnes/images/{filename}'.format(filename=filename)
+
+def famille_upload_to(instance, filename):
+    return 'familles/images/{filename}'.format(filename=filename)
 
 class Eglise(models.Model):
     name = models.CharField(max_length=200, unique=True)
@@ -79,6 +82,7 @@ class Famille(models.Model):
     eglise = models.ForeignKey('Eglise', on_delete=models.CASCADE)
     created_on = models.DateTimeField(default=now)
     author = models.ForeignKey(User, on_delete=models.CASCADE, default=1)
+    image_url = models.ImageField(upload_to=famille_upload_to, blank=True, null=True)
 
     class Meta:
         ordering = ['id']
@@ -106,8 +110,11 @@ class Personne(models.Model):
     created_on = models.DateTimeField(default=now)
     image_url = models.ImageField(upload_to=upload_to, blank=True, null=True)
 
+
     class Meta:
         ordering = ['id']
 
     def __str__(self):
-        return self.firstname
+        return self.image_url
+
+

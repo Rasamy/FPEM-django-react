@@ -27,11 +27,11 @@ class BapthemeSerializer(serializers.ModelSerializer):
 class FamilleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Famille
-        fields = ('id','firstname','lastname','is_fidele','address','contact','eglise','created_on','author')
+        fields = ('id','firstname','lastname','is_fidele','address','contact','eglise','created_on','author','image_url')
 
 
 class PersonneSerializer(serializers.ModelSerializer):
-    image_url = serializers.ImageField(required=False)
+    image_url = serializers.ImageField(required=False,use_url=True)
     class Meta:
         model = Personne
         fields = ('id','firstname','lastname','age','address','contact','is_maried','is_baptised','situation_familiale','feu','sexe','famille','author','eglise','baptheme','created_on','image_url')

@@ -17,22 +17,17 @@ export function Navigation() {
     const navs = [
         {
             path:"/",
-            name: "Home",
+            name: "Accueil",
             icon: "home"
         },
         {
-            path:"/about",
-            name: "About",
+            path:"/compte",
+            name: "Mon compte",
             icon: "more"
         },
         {
             path:"/famille",
             name: "Famille",
-            icon: "profile"
-        },
-        {
-            path:"/personne",
-            name: "Personne",
             icon: "profile"
         },
         {
@@ -44,12 +39,12 @@ export function Navigation() {
     const navAuth = [
         {
             path:"/",
-            name: "Home",
+            name: "Accueil",
             icon: "home"
         },
         {
-            path:"/about",
-            name: "About",
+            path:"/compte",
+            name: "Mon compte",
             icon: "more"
         },
         {
@@ -60,11 +55,6 @@ export function Navigation() {
         {
             path:"/famille",
             name: "Famille",
-            icon: "profile"
-        },
-        {
-            path:"/personne",
-            name: "Personne",
             icon: "profile"
         },
         {
@@ -81,7 +71,7 @@ export function Navigation() {
                 <ul className="utilities">
                     <br />
                     <li className="users">
-                        <NavLink exact to="/">
+                        <NavLink exact to="/compte">
                             Mon Compte
                         </NavLink>
                     </li>

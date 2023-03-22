@@ -1,4 +1,8 @@
+import base64
 from django.shortcuts import render
+from rest_framework.renderers import JSONRenderer
+from backend.settings import MEDIA_URL, MEDIA_ROOT
+import os
 
 # Create your views here.
 from rest_framework.views import APIView
@@ -61,6 +65,8 @@ class FamilleView(viewsets.ModelViewSet):
     serializer_class = FamilleSerializer
     queryset = Famille.objects.all()
     permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)
+
 
     def get_queryset(self):
         qs = Famille.objects.all()
@@ -76,7 +82,6 @@ class PersonneView(viewsets.ModelViewSet):
     serializer_class = PersonneSerializer
     queryset = Personne.objects.all()
     parser_classes = (MultiPartParser, FormParser)
-
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -88,3 +93,16 @@ class PersonneView(viewsets.ModelViewSet):
         if eglises is not None and bapteme is not None and user is not None:
             return qs.filter(eglise=eglises, bapteme=bapteme,author=user)
         return qs
+
+class ImageView(APIView):
+    
+    def get(self, request, pk=None):
+        if pk:
+            personne = Personne.objects.get(id=pk)
+            imagePath = personne.image_url
+            imagePath = os.path.basename(imagePath)
+            with open(imagePath, "rb") as image_file:
+                encoded_string = base64.b64encode(image_file.read())
+                return {"image": encoded_string, "id" : pk}
+
+            
